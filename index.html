@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رغد القراءة التفاعلي - Google TV Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-focus: #334155;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-gold: #f59e0b;
+            --accent-pink: #ec4899;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --focus-border: #fbbf24;
+            --focus-shadow: rgba(251, 191, 36, 0.6);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-light);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            direction: rtl;
+        }
+
+        /* TV Screen Container Header */
+        header {
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            padding: 1.2rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #4338ca;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            font-size: 2.2rem;
+            background: var(--accent-gold);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .tv-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            font-size: 1rem;
+            color: var(--accent-gold);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tv-badge::before {
+            content: "●";
+            color: var(--accent-green);
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+
+        /* Main Workspace */
+        main {
+            flex: 1;
+            padding: 2rem 3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow: hidden;
+        }
+
+        /* Navigation Grid for Stages */
+        .stages-nav {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 1rem;
+        }
+
+        .stage-btn {
+            background-color: var(--bg-card);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 1rem 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .stage-btn .num {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .stage-btn .title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        /* TV Focus Highlight */
+        .focusable:focus, .stage-btn.active {
+            background-color: var(--bg-card-focus);
+            border-color: var(--focus-border);
+            transform: scale(1.05);
+            box-shadow: 0 0 25px var(--focus-shadow);
+            z-index: 10;
+        }
+
+        .stage-btn.active {
+            border-color: var(--accent-blue);
+            background-color: #1e3a8a;
+        }
+
+        .stage-btn.active:focus {
+            border-color: var(--focus-border);
+            background-color: #2563eb;
+        }
+
+        /* Active Content Panel */
+        .content-panel {
+            flex: 1;
+            background-color: var(--bg-card);
+            border-radius: 24px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1rem;
+        }
+
+        .panel-title {
+            font-size: 1.6rem;
+            color: var(--accent-gold);
+        }
+
+        .panel-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        /* Display Area */
+        .display-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Big Card Display */
+        .card-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .big-text {
+            font-size: 6rem;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+            background: linear-gradient(180deg, #ffffff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .diacritics-highlight {
+            color: var(--accent-pink);
+            -webkit-text-fill-color: var(--accent-pink);
+        }
+
+        .syllables-container {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            direction: rtl;
+        }
+
+        .syllable-box {
+            background-color: #090d16;
+            border: 3px solid var(--accent-blue);
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #fff;
+            min-width: 110px;
+            text-align: center;
+        }
+
+        .plus-sign {
+            font-size: 2.5rem;
+            color: var(--accent-gold);
+        }
+
+        /* Control Action Buttons */
+        .actions-bar {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            padding-top: 1rem;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 16px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #475569, #334155);
+        }
+
+        .action-btn.accent {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        /* Remote Overlay Help Bar */
+        footer {
+            background-color: #090d16;
+            padding: 0.8rem 3rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .remote-key {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .key-badge {
+            background: #334155;
+            color: #fff;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-weight: bold;
+            border: 1px solid #475569;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Canvas Grid Line simulation */
+        .writing-line {
+            position: absolute;
+            width: 80%;
+            height: 3px;
+            background-color: #ef4444;
+            top: 65%;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        .writing-line::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            border-top: 2px dashed #94a3b8;
+            top: -60px;
+            opacity: 0.4;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-title">
+            <div class="logo-icon">📖</div>
+            <div>
+                <h1>رغد القراءة التفاعلي</h1>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">منهج التأسيس القرائي المتدرج للأطفال</p>
+            </div>
+        </div>
+        <div class="tv-badge">وضع التلفزيون (Google TV / Android TV)</div>
+    </header>
+
+    <main>
+        <!-- Top Stage Selection Navigation -->
+        <nav class="stages-nav">
+            <button class="stage-btn focusable active" tabindex="0" onclick="selectStage(0)">
+                <span class="num">المرحلة 1</span>
+                <span class="title">الفتحة</span>
+            </button>
+            <button class="stage-btn focusable" tabindex="0" onclick="selectStage(1)">
+                <span class="num">المرحلة 2</span>
+                <span class="title">الكلمات الثلاثية</span>
+            </button>
+            <button class="stage-btn focusable" tabindex="0" onclick="selectStage(2)">
+                <span class="num">المرحلة 3</span>
+                <span class="title">المدود الطويلة</span>
+            </button>
+            <button class="stage-btn focusable" tabindex="0" onclick="selectStage(3)">
+                <span class="num">المرحلة 4</span>
+                <span class="title">السكون</span>
+            </button>
+            <button class="stage-btn focusable" tabindex="0" onclick="selectStage(4)">
+                <span class="num">المرحلة 5</span>
+                <span class="title">التنوين والشدة</span>
+            </button>
+            <button class="stage-btn focusable" tabindex="0" onclick="selectStage(5)">
+                <span class="num">المرحلة 6</span>
+                <span class="title">قراءة الجمل</span>
+            </button>
+        </nav>
+
+        <!-- Main Display Panel -->
+        <section class="content-panel">
+            <div class="panel-header">
+                <div class="panel-title" id="stageTitle">المرحلة الأولى: أصوات الحروف بحركة الفتح</div>
+                <div class="panel-subtitle" id="stageDesc">استمع إلى صوت الحرف المفتوح وركز على النطق السريع بدون مط</div>
+            </div>
+
+            <div class="display-stage" id="displayStage">
+                <div class="writing-line"></div>
+                <div class="card-view">
+                    <div class="big-text" id="mainDisplay">أَ</div>
+                    <div class="syllables-container" id="syllableDisplay" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="actions-bar">
+                <button class="action-btn secondary focusable" tabindex="0" onclick="prevItem()">
+                    <span>◀</span> السابق
+                </button>
+                <button class="action-btn accent focusable" tabindex="0" id="speakBtn" onclick="speakCurrent()">
+                    <span>🔊</span> استمع للصوت (OK)
+                </button>
+                <button class="action-btn focusable" tabindex="0" onclick="nextItem()">
+                    التالي <span>▶</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- TV Remote Control Legend Footer -->
+    <footer>
+        <div class="remote-key">
+            <span class="key-badge">▲ ▼ ◄ ►</span>
+            <span>التنقل بين البطاقات والأزرار</span>
+        </div>
+        <div class="remote-key">
+            <span class="key-badge">OK / Enter</span>
+            <span>استماع / اختيار</span>
+        </div>
+        <div class="remote-key">
+            <span class="key-badge">الرجوع (Back)</span>
+            <span>العودة للمرحلة الأولى</span>
+        </div>
+    </footer>
+
+    <script>
+        // Database of Curriculum Stages based on Raghad Al-Qira'a methodology
+        const curriculum = [
+            {
+                title: "المرحلة الأولى: أصوات الحروف بحركة الفتح",
+                desc: "انطق الحرف المفتوح بصوت قصير وسريع",
+                type: "single",
+                items: [
+                    { text: "أَ", speak: "أَ" },
+                    { text: "بَ", speak: "بَ" },
+                    { text: "تَ", speak: "تَ" },
+                    { text: "ثَ", speak: "ثَ" },
+                    { text: "جَ", speak: "جَ" },
+                    { text: "حَ", speak: "حَ" },
+                    { text: "خَ", speak: "خَ" },
+                    { text: "دَ", speak: "دَ" },
+                    { text: "رَ", speak: "رَ" },
+                    { text: "سَ", speak: "سَ" },
+                    { text: "قَ", speak: "قَ" },
+                    { text: "كَبـَ", speak: "كَبَ" }
+                ]
+            },
+            {
+                title: "المرحلة الثانية: الكلمات الثلاثية والدمج السريع",
+                desc: "اقرأ أول حرفين معاً ثم أضف الحرف الثالث بسرعة",
+                type: "syllable",
+                items: [
+                    { parts: ["دَرَ", "سَ"], word: "دَرَسَ" },
+                    { parts: ["كَتَ", "بَ"], word: "كَتَبَ" },
+                    { parts: ["قَرَ", "أَ"], word: "قَرَأَ" },
+                    { parts: ["فَهـِ", "مَ"], word: "فَهِمَ" },
+                    { parts: ["خَرَ", "جَ"], word: "خَرَجَ" },
+                    { parts: ["وَجَ", "دَ"], word: "وَجَدَ" },
+                    { parts: ["ذَهـَ", "بَ"], word: "ذَهَبَ" }
+                ]
+            },
+            {
+                title: "المرحلة الثالثة: المدود الطويلة (الألف، الواو، الياء)",
+                desc: "لاحظ الفرق بين الحركة القصيرة والصوت الطويل للمد",
+                type: "single",
+                items: [
+                    { text: "بَ ⬅️ بَا", speak: "با" },
+                    { text: "قَالَ", speak: "قَال" },
+                    { text: "طَارَ", speak: "طَار" },
+                    { text: "بُ ⬅️ بُو", speak: "بو" },
+                    { text: "يَقُولُ", speak: "يَقُول" },
+                    { text: "صُورَة", speak: "صُورَة" },
+                    { text: "بِ ⬅️ بِي", speak: "بي" },
+                    { text: "فِيل", speak: "فِيل" },
+                    { text: "كَبِير", speak: "كَبِير" }
+                ]
+            },
+            {
+                title: "المرحلة الرابعة: السكون والمقطع الساكن",
+                desc: "انطق الحرف الساكن مع الحرف الذي قبله كدفعة واحدة",
+                type: "syllable",
+                items: [
+                    { parts: ["مَدْ", "رَسَ", "ةٌ"], word: "مَدْرَسَة" },
+                    { parts: ["يَلْ", "عَبُ"], word: "يَلْعَب" },
+                    { parts: ["أَكْ", "تُبُ"], word: "أَكْتُب" },
+                    { parts: ["بَيـْ", "تٌ"], word: "بَيْت" },
+                    { parts: ["شَمـْ", "سٌ"], word: "شَمْس" }
+                ]
+            },
+            {
+                title: "المرحلة الخامسة: التنوين والشدة",
+                desc: "التنوين نون ساكنة تنطق ولا تكتب، والشدة حرفان أولهما ساكن",
+                type: "single",
+                items: [
+                    { text: "كِتَابٌ", speak: "كِتَابٌ" },
+                    { text: "كِتَاباً", speak: "كِتَاباً" },
+                    { text: "كِتَابٍ", speak: "كِتَابٍ" },
+                    { text: "مُعَلِّمٌ", speak: "مُعَلِّم" },
+                    { text: "شَرَّبَ", speak: "شَرَّب" },
+                    { text: "طَفَّلٌ", speak: "طِفْلٌ" }
+                ]
+            },
+            {
+                title: "المرحلة السادسة: قراءة الجمل البسيطة",
+                desc: "اقرأ الجملة كاملة بسلاسة وبدون توقف بين الكلمات",
+                type: "single",
+                items: [
+                    { text: "قَرَأَ أَحْمَدُ الكِتَابَ", speak: "قَرَأَ أَحْمَدُ الكِتَابَ" },
+                    { text: "ذَهَبَ الوَلَدُ إِلَى المَدْرَسَةِ", speak: "ذَهَبَ الوَلَدُ إِلَى المَدْرَسَةِ" },
+                    { text: "كَتَبَ التِّلْمِيذُ الدَّرْسَ", speak: "كَتَبَ التِّلْمِيذُ الدَّرْسَ" },
+                    { text: "العِلْمُ نُورٌ فِي الحَيَاةِ", speak: "العِلْمُ نُورٌ فِي الحَيَاةِ" }
+                ]
+            }
+        ];
+
+        let currentStageIdx = 0;
+        let currentItemIdx = 0;
+
+        function updateUI() {
+            const stage = curriculum[currentStageIdx];
+            document.getElementById('stageTitle').innerText = stage.title;
+            document.getElementById('stageDesc').innerText = stage.desc;
+
+            // Highlight Active Stage Header Button
+            const stageBtns = document.querySelectorAll('.stage-btn');
+            stageBtns.forEach((btn, idx) => {
+                if (idx === currentStageIdx) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            const currentItem = stage.items[currentItemIdx];
+            const mainDisplay = document.getElementById('mainDisplay');
+            const syllableDisplay = document.getElementById('syllableDisplay');
+
+            if (stage.type === 'single') {
+                mainDisplay.style.display = 'block';
+                syllableDisplay.style.display = 'none';
+                mainDisplay.innerText = currentItem.text;
+            } else if (stage.type === 'syllable') {
+                mainDisplay.style.display = 'none';
+                syllableDisplay.style.display = 'flex';
+                syllableDisplay.innerHTML = '';
+                
+                currentItem.parts.forEach((part, index) => {
+                    const box = document.createElement('div');
+                    box.className = 'syllable-box';
+                    box.innerText = part;
+                    syllableDisplay.appendChild(box);
+
+                    if (index < currentItem.parts.length - 1) {
+                        const plus = document.createElement('div');
+                        plus.className = 'plus-sign';
+                        plus.innerText = '+';
+                        syllableDisplay.appendChild(plus);
+                    }
+                });
+
+                // Add whole word display below
+                const wholeWordBox = document.createElement('div');
+                wholeWordBox.className = 'syllable-box';
+                wholeWordBox.style.borderColor = 'var(--accent-gold)';
+                wholeWordBox.style.backgroundColor = '#1e1b4b';
+                wholeWordBox.innerText = currentItem.word;
+                
+                const equals = document.createElement('div');
+                equals.className = 'plus-sign';
+                equals.innerText = '=';
+                
+                syllableDisplay.appendChild(equals);
+                syllableDisplay.appendChild(wholeWordBox);
+            }
+
+            // Auto Speak on TV Navigation
+            speakCurrent();
+        }
+
+        function selectStage(idx) {
+            currentStageIdx = idx;
+            currentItemIdx = 0;
+            updateUI();
+        }
+
+        function nextItem() {
+            if (currentItemIdx < curriculum[currentStageIdx].items.length - 1) {
+                currentItemIdx++;
+                updateUI();
+            }
+        }
+
+        function prevItem() {
+            if (currentItemIdx > 0) {
+                currentItemIdx--;
+                updateUI();
+            }
+        }
+
+        function speakCurrent() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Stop any ongoing speech
+                const stage = curriculum[currentStageIdx];
+                const item = stage.items[currentItemIdx];
+                const textToSpeak = item.speak || item.text || item.word;
+
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'ar-SA';
+                utterance.rate = 0.75; // Slower rate for young learners
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Spatial Navigation Engine for TV Remote D-Pad Control
+        document.addEventListener('keydown', (e) => {
+            const focusables = Array.from(document.querySelectorAll('.focusable'));
+            const activeElement = document.activeElement;
+            let index = focusables.indexOf(activeElement);
+
+            if (index === -1) {
+                focusables[0].focus();
+                return;
+            }
+
+            switch(e.key) {
+                case 'ArrowLeft':
+                    if (index < focusables.length - 1) focusables[index + 1].focus();
+                    e.preventDefault();
+                    break;
+                case 'ArrowRight':
+                    if (index > 0) focusables[index - 1].focus();
+                    e.preventDefault();
+                    break;
+                case 'ArrowDown':
+                    // Move from stage buttons nav to action buttons
+                    if (activeElement.classList.contains('stage-btn')) {
+                        document.getElementById('speakBtn').focus();
+                    }
+                    e.preventDefault();
+                    break;
+                case 'ArrowUp':
+                    // Move back to stage navigation
+                    if (!activeElement.classList.contains('stage-btn')) {
+                        document.querySelectorAll('.stage-btn')[currentStageIdx].focus();
+                    }
+                    e.preventDefault();
+                    break;
+                case 'Backspace':
+                case 'Escape':
+                    // TV Back Button -> Return to Stage 1
+                    selectStage(0);
+                    focusables[0].focus();
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        // Initialize focus on startup
+        window.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.stage-btn')[0].focus();
+            updateUI();
+        });
+    </script>
+</body>
+</html>
